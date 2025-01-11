@@ -8,10 +8,9 @@ const PORT = process.env.PORT || 3000;
 
 // Настройка CORS для разрешения запросов с https://chibe.lol
 app.use(cors({
-  origin: "https://chibe.lol",
+  origin: "https://chibe.lol", // Укажите ваш домен
 }));
 
-// OpenAI API ключ
 const OPENAI_API_KEY = "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";
 
 app.use(bodyParser.json());
