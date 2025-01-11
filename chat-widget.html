@@ -33,7 +33,24 @@
   #messages {
     max-height: 200px;
     overflow-y: auto;
-    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #messages div {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+  #messages div:nth-child(odd) {
+    background-color: #e0f7fa;
+    align-self: flex-start;
+  }
+  #messages div:nth-child(even) {
+    background-color: #e8eaf6;
+    align-self: flex-end;
   }
   #chat-input {
     width: calc(100% - 60px);
@@ -55,34 +72,64 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  sendBtn.addEventListener("click", async () => {
-    const userMessage = chatInput.value;
-    if (!userMessage.trim()) return;
+  // Функция для генерации промпта
+  function generatePrompt(userMessage) {
+    return `
+      You are an AI assistant with the following personality traits:
+      - Friendly and helpful.
+      - Expert in various domains.
 
-    // Add user message to chat
+      Respond to the user's messages in a conversational tone.
+
+      User's message:
+      "${userMessage}"
+    `;
+  }
+
+  // Обработчик нажатия кнопки "Send"
+  sendBtn.addEventListener("click", async () => {
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) return;
+
+    // Добавляем сообщение пользователя в чат
     const userMessageElem = document.createElement("div");
     userMessageElem.textContent = `You: ${userMessage}`;
     messages.appendChild(userMessageElem);
 
     chatInput.value = "";
 
-    // Send request to AI
-    const response = await fetch("https://api.tophat.one/agent-api/fb2ac421-f9d4-43b8-b9a4-08927a819ebd/knowledge", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer tophat_976d1e3da2b7444e85c6ba692711ef05"
-      },
-      body: JSON.stringify({ prompt: userMessage })
-    });
+    // Генерируем промпт
+    const prompt = generatePrompt(userMessage);
 
-    const data = await response.json();
+    try {
+      // Отправляем запрос к API
+      const response = await fetch("https://api.tophat.one/agent-api/fb2ac421-f9d4-43b8-b9a4-08927a819ebd/knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer tophat_976d1e3da2b7444e85c6ba692711ef05"
+        },
+        body: JSON.stringify({ prompt: prompt })
+      });
 
-    // Add AI response to chat
-    const aiMessageElem = document.createElement("div");
-    aiMessageElem.textContent = `AI: ${data.response}`;
-    messages.appendChild(aiMessageElem);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    messages.scrollTop = messages.scrollHeight;
+      const data = await response.json();
+
+      // Добавляем ответ AI в чат
+      const aiMessageElem = document.createElement("div");
+      aiMessageElem.textContent = `AI: ${data.reply || "Sorry, I couldn't understand."}`;
+      messages.appendChild(aiMessageElem);
+
+      // Автопрокрутка
+      messages.scrollTop = messages.scrollHeight;
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      const errorElem = document.createElement("div");
+      errorElem.textContent = "AI: Sorry, something went wrong.";
+      messages.appendChild(errorElem);
+    }
   });
 </script>
