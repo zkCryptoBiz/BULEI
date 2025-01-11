@@ -8430,74 +8430,93 @@
 </style>
 
 <script>
-  const sendBtn = document.getElementById("send-btn");
-  const chatInput = document.getElementById("chat-input");
-  const messages = document.getElementById("messages");
+                    const chatHistory = JSON.parse(sessionStorage.getItem('chatHistory')) || [];
 
-  // Обновленная функция sendMessage для работы с OpenAI API
-  async function sendMessage(userMessage) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer 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`, // Замените на свой ключ API
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [{ role: "user", content: userMessage }],
-        }),
-      });
+                    function updateChatHistory() {
+                        const chatHistoryDiv = document.getElementById('chat-history');
+                        chatHistoryDiv.innerHTML = chatHistory.map(msg => msg).join('');
+                        chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+                    }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+                    function addMessageToChat(message, isUser) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = isUser ? 'user-message' : 'bot-message';
+                        if (!isUser) {
+                            messageDiv.innerHTML = `<div class="bot-avatar"></div> <span>${message}</span>`;
+                        } else {
+                            messageDiv.innerHTML = `<span>${message}</span>`;
+                        }
 
-      const data = await response.json();
-      return data.reply; // Корректное получение ответа
-    } catch (error) {
-      console.error("Error:", error.message);
-      throw new Error("An error occurred while communicating with the server.");
-    }
-  }
+                        chatHistory.push(messageDiv.outerHTML);
+                        updateChatHistory();
 
-  // Обработчик для кнопки отправки сообщения
-  sendBtn.addEventListener("click", async () => {
-    const userMessage = chatInput.value.trim();
-    if (!userMessage) {
-      alert("Please enter a message.");
-      return;
-    }
+                        messageDiv.style.opacity = 0;
+                        setTimeout(() => {
+                            messageDiv.style.opacity = 1;
+                        }, 0);
+                    }
 
-    const userMessageElem = document.createElement("div");
-    userMessageElem.className = "user";
-    userMessageElem.textContent = `You: ${userMessage}`;
-    messages.appendChild(userMessageElem);
+                    document.getElementById('send-button').addEventListener('click', sendMessage);
+                    document.getElementById('user-input').addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            sendMessage();
+                        }
+                    });
 
-    chatInput.value = "";
-    document.getElementById("loading").style.display = "block";
+                    async function sendMessage() {
+                      const sendButton = document.getElementById('send-button');
 
-    try {
-      const aiResponse = await sendMessage(userMessage);
+                      if(sendButton.disabled) return
 
-      const aiMessageElem = document.createElement("div");
-      aiMessageElem.className = "ai";
-      aiMessageElem.textContent = `AI: ${aiResponse}`;
-      messages.appendChild(aiMessageElem);
+                        const userInput = document.getElementById('user-input').value;
+                        if (!userInput) return;
 
-      messages.scrollTop = messages.scrollHeight;
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      document.getElementById("loading").style.display = "none";
-    }
-  });
+                        addMessageToChat(`Вы: ${userInput}`, true);
+                        sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                        document.getElementById('user-input').value = '';
 
-  // Обработчик для отправки сообщения по Enter
-  chatInput.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") sendBtn.click();
-  });
-</script>
+                        const typingIndicator = document.createElement('div');
+                        typingIndicator.className = 'bot-message';
+                        typingIndicator.innerHTML = `<div class="bot-avatar"></div> <span>Бот печатает...</span>`;
+                        chatHistory.push(typingIndicator.outerHTML);
+                        updateChatHistory();
+
+                        // Блокируем кнопку отправки
+                        sendButton.disabled = true;
+                        const fetchPromise = fetch('http://localhost:3000/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ messages: chatHistory.slice(-10) })
+                        });
+
+                        // Таймер на 5 секунд
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Ошибка сервера')), 5000)
+                        );
+
+                        try {
+                            const response = await Promise.race([fetchPromise, timeoutPromise]);
+                            if (!response.ok) {
+                                throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
+                            }
+                            const data = await response.json();
+                            chatHistory.pop(); 
+                            addMessageToChat(`${data.reply}`, false);
+                        } catch (error) {
+                            chatHistory.pop();
+                            addMessageToChat(`Ошибка: ${error.message || 'Ошибка при отправке запроса'}`, false);
+                        } finally {
+                            updateChatHistory();
+                            sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                            // Разблокируем кнопку отправки
+                            sendButton.disabled = false;
+                        }
+                    }
+
+                    updateChatHistory();
+                  </script>
 
 
 
