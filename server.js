@@ -1,47 +1,68 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const axios = require("axios");
+const express = require('express');
+const bodyParser = require('body-parser');
+const axios = require('axios');
+const cors = require('cors');
+const fs = require('fs');
+const rateLimit = require('express-rate-limit');
+
+const volkovData = JSON.parse(fs.readFileSync('Volkov.json', 'utf8'));
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
+const TOKEN = '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'
 
-// Настройка CORS для разрешения запросов с https://chibe.lol
-app.use(cors({
-  origin: "https://chibe.lol", // Укажите ваш домен
-}));
-
-const OPENAI_API_KEY = "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";
-
+app.use(cors({origin: 'https://chibe.lol',}));
 app.use(bodyParser.json());
 
-app.post("/api/chat", async (req, res) => {
-  const { message } = req.body;
+// Настройка ограничения частоты запросов
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 60, 
+    message: 'Слишком много запросов с этого IP, попробуйте позже.'
+});
 
-  try {
-    const response = await axios.post(
-      "https://api.openai.com/v1/completions",
-      {
-        model: "text-davinci-003",
-        prompt: `You are an AI assistant. Respond in a friendly and helpful manner.\n\nUser: ${message}\nAI:`,
-        max_tokens: 150,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        }
-      }
-    );
+app.use('/chat', limiter);
 
-    res.json({ reply: response.data.choices[0].text.trim() });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ error: "Failed to fetch response from OpenAI." });
-  }
+
+app.post('/chat', async (req, res) => {
+    const userMessages = req.body.messages;
+
+    const prompt = `
+    You are a character with the following traits:
+    Name: ${volkovData.name}
+    Personality: ${volkovData.Personality}
+    Values: ${volkovData.Values}
+    Culture: ${volkovData.Culture}
+    Unexpected Scenarios:
+    - Hostility: ${volkovData.unexpectedScenarios.hostility}
+    - Unknown: ${volkovData.unexpectedScenarios.unknown}
+    
+    Respond to the user's messages in character without mentioning your name or prefixing your responses.
+
+    User messages:
+    ${userMessages.map(msg => msg.replace(/<.*?>/g, '')).join('\n')} 
+    `;
+
+    try {
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: 'gpt-3.5-turbo',
+            messages: [{ role: 'user', content: prompt }]
+        }, {
+            headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const botReply = response.data.choices[0].message.content.trim(); 
+        const cleanedReply = botReply.replace(/^Бот:\s*/, ''); 
+        res.json({ reply: cleanedReply });
+    } catch (error) {
+        console.error('Error fetching from OpenAI:', error);
+        res.status(500).json({ error: 'Ошибка при отправке запроса' });
+    }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
