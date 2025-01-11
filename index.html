@@ -8434,9 +8434,10 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
+  // Обновленная функция sendMessage для работы с сервером
   async function sendMessage(userMessage) {
     try {
-      const response = await fetch("https://your-server.com/api/chat", { // Замените на URL вашего сервера
+      const response = await fetch("https://bulei.onrender.com/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -8487,6 +8488,7 @@
     if (event.key === "Enter") sendBtn.click();
   });
 </script>
+
 
 
 
