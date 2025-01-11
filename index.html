@@ -8356,6 +8356,104 @@
     <!-- Start of bodyEnd -->
 
     <!-- End of bodyEnd -->
+    <div id="chat-widget">
+  <div id="chat-header">Chat with AI</div>
+  <div id="chat-body">
+    <div id="messages"></div>
+    <input id="chat-input" type="text" placeholder="Type a message..." />
+    <button id="send-btn">Send</button>
+  </div>
+</div>
+
+<style>
+  #chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+  }
+  #chat-header {
+    background-color: #3f51b5;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 10px 10px 0 0;
+  }
+  #chat-body {
+    padding: 10px;
+  }
+  #messages {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  #chat-input {
+    width: calc(100% - 60px);
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  #send-btn {
+    padding: 8px 10px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+</style>
+<script>
+  document.getElementById("send-btn").addEventListener("click", async () => {
+    const chatInput = document.getElementById("chat-input");
+    const messages = document.getElementById("messages");
+
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) return;
+
+    // Отображаем сообщение пользователя
+    const userMessageElem = document.createElement("div");
+    userMessageElem.textContent = `You: ${userMessage}`;
+    messages.appendChild(userMessageElem);
+    chatInput.value = "";
+
+    // Запрос к API ИИ
+    try {
+      const response = await fetch("YOUR_AI_API_ENDPOINT", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer YOUR_API_KEY",
+        },
+        body: JSON.stringify({ prompt: userMessage }),
+      });
+
+      const data = await response.json();
+      const aiResponse = data.response || "Sorry, I couldn't understand.";
+
+      // Отображаем ответ ИИ
+      const aiMessageElem = document.createElement("div");
+      aiMessageElem.textContent = `AI: ${aiResponse}`;
+      messages.appendChild(aiMessageElem);
+
+      // Автопрокрутка сообщений
+      messages.scrollTop = messages.scrollHeight;
+    } catch (error) {
+      console.error("Error:", error);
+      const errorElem = document.createElement("div");
+      errorElem.textContent = "AI: Sorry, something went wrong.";
+      messages.appendChild(errorElem);
+    }
+  });
+</script>
+
 </body>
 
 </html>
