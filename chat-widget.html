@@ -60,7 +60,7 @@
     margin-right: 5px;
   }
   #send-btn {
-    padding: 5px 10px;
+    padding: 8px 10px;
     background-color: #007bff;
     color: white;
     border: none;
@@ -74,8 +74,8 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  // OpenAI API Key (замените на свой ключ)
-  const OPENAI_API_KEY = "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"; // Вставьте ваш API-ключ OpenAI
+  // OpenAI API Key
+  const OPENAI_API_KEY = "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";
 
   // Функция отправки запроса к OpenAI API
   async function sendMessage(userMessage) {
@@ -138,4 +138,12 @@
     } catch (error) {
       alert(error.message);
     } finally {
-      document.getElementById("
+      document.getElementById("loading").style.display = "none"; // Скрываем индикатор загрузки
+    }
+  });
+
+  // Обработчик отправки сообщения по Enter
+  chatInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") sendBtn.click();
+  });
+</script>
