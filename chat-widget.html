@@ -74,48 +74,17 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  // Выбор метода API (GET или UPDATE)
-  const apiMethod = "GET"; // Или "UPDATE" в зависимости от задачи
+  // Определяем метод API: GET для получения данных или UPDATE для обновления
+  const apiMethod = "GET"; // Или "UPDATE", если нужно
 
-  // Функция для генерации промпта
-  function generatePrompt(userMessage) {
-    return `
-      You are an AI assistant with the following personality traits:
-      - Friendly and helpful.
-      - Expert in various domains.
-
-      Respond to the user's messages in a conversational tone.
-
-      User's message:
-      "${userMessage}"
-    `;
-  }
-
-  // Обработчик кнопки Send
-  sendBtn.addEventListener("click", async () => {
-    const userMessage = chatInput.value.trim();
-    if (!userMessage) {
-      alert("Please enter a message.");
-      return;
-    }
-
-    // Добавляем сообщение пользователя
-    const userMessageElem = document.createElement("div");
-    userMessageElem.className = "user";
-    userMessageElem.textContent = `You: ${userMessage}`;
-    messages.appendChild(userMessageElem);
-
-    chatInput.value = "";
-
-    // Показываем индикатор загрузки
-    document.getElementById("loading").style.display = "block";
-
+  // Функция отправки запроса к API
+  async function sendMessage(userMessage) {
     try {
       let response;
       let apiUrl = "https://api.tophat.one/agent-api/fb2ac421-f9d4-43b8-b9a4-08927a819ebd/knowledge";
 
       if (apiMethod === "GET") {
-        // Для GET добавляем параметр в URL
+        // GET-запрос: добавляем параметр prompt в URL
         apiUrl += `?prompt=${encodeURIComponent(userMessage)}`;
         response = await fetch(apiUrl, {
           method: "GET",
@@ -124,39 +93,64 @@
           },
         });
       } else if (apiMethod === "UPDATE") {
-        // Для UPDATE отправляем тело запроса
+        // UPDATE-запрос: отправляем prompt в теле запроса
         response = await fetch(apiUrl, {
           method: "UPDATE",
           headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer tophat_976d1e3da2b7444e85c6ba692711ef05",
           },
-          body: JSON.stringify({ prompt: generatePrompt(userMessage) }),
+          body: JSON.stringify({ prompt: userMessage }),
         });
       }
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      const aiResponse = data.response || "Sorry, I couldn't understand.";
+      return data.response || "Sorry, I couldn't understand.";
+    } catch (error) {
+      console.error("Error:", error.message);
+      throw new Error("An error occurred while communicating with the AI API.");
+    }
+  }
 
-      // Добавляем ответ AI
+  // Обработчик кнопки "Send"
+  sendBtn.addEventListener("click", async () => {
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) {
+      alert("Please enter a message.");
+      return;
+    }
+
+    // Добавляем сообщение пользователя в чат
+    const userMessageElem = document.createElement("div");
+    userMessageElem.className = "user";
+    userMessageElem.textContent = `You: ${userMessage}`;
+    messages.appendChild(userMessageElem);
+
+    chatInput.value = ""; // Очищаем поле ввода
+    document.getElementById("loading").style.display = "block"; // Показываем индикатор загрузки
+
+    try {
+      // Отправляем сообщение и получаем ответ от API
+      const aiResponse = await sendMessage(userMessage);
+
+      // Добавляем ответ AI в чат
       const aiMessageElem = document.createElement("div");
       aiMessageElem.className = "ai";
       aiMessageElem.textContent = `AI: ${aiResponse}`;
       messages.appendChild(aiMessageElem);
 
-      // Автопрокрутка
+      // Автопрокрутка сообщений
       messages.scrollTop = messages.scrollHeight;
     } catch (error) {
-      console.error("Error:", error.message);
-      alert("An error occurred while communicating with the AI. Please try again later.");
+      alert(error.message);
     } finally {
-      document.getElementById("loading").style.display = "none";
+      document.getElementById("loading").style.display = "none"; // Скрываем индикатор загрузки
     }
   });
 
-  // Отправка по Enter
+  // Обработчик отправки сообщения по Enter
   chatInput.addEventListener("keypress", (event) => {
     if (event.key === "Enter") sendBtn.click();
   });
