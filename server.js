@@ -9,9 +9,9 @@ const volkovData = JSON.parse(fs.readFileSync('Volkov.json', 'utf8'));
 
 const app = express();
 const PORT = 3000;
-const TOKEN = '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'
+const TOKEN = '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';
 
-app.use(cors({origin: 'https://chibe.lol',}));
+app.use(cors());
 app.use(bodyParser.json());
 
 // Настройка ограничения частоты запросов
