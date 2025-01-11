@@ -8437,12 +8437,15 @@
   // Обновленная функция sendMessage для работы с сервером
   async function sendMessage(userMessage) {
     try {
-      const response = await fetch("https://bulei.onrender.com/api/chat", {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+		  "Authorization": `Bearer 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`,
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: userMessage }],,
       });
 
       const data = await response.json();
