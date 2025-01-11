@@ -8418,6 +8418,7 @@
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 5px;
+    margin-right: 5px;
   }
   #send-btn {
     padding: 8px 10px;
@@ -8434,8 +8435,8 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  // OpenAI API Key (замените на свой ключ)
-  const OPENAI_API_KEY = "sk-..."; // Вставьте ваш API-ключ OpenAI
+  // OpenAI API Key
+  const OPENAI_API_KEY = "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";
 
   // Функция отправки запроса к OpenAI API
   async function sendMessage(userMessage) {
@@ -8449,7 +8450,7 @@
           Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "text-davinci-003", // Используемая модель OpenAI
+          model: "text-davinci-003",
           prompt: prompt,
           max_tokens: 150,
           temperature: 0.7,
@@ -8459,7 +8460,7 @@
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      return data.choices[0].text.trim(); // Возвращаем текст AI
+      return data.choices[0].text.trim();
     } catch (error) {
       console.error("Error:", error.message);
       throw new Error("An error occurred while communicating with OpenAI API.");
@@ -8507,6 +8508,7 @@
     if (event.key === "Enter") sendBtn.click();
   });
 </script>
+
 
 
 
