@@ -8434,28 +8434,34 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  // Обновленная функция sendMessage для работы с сервером
+  // Обновленная функция sendMessage для работы с OpenAI API
   async function sendMessage(userMessage) {
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-		  "Authorization": `Bearer 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`,
+          "Authorization": `Bearer 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`, // Замените на свой ключ API
         },
         body: JSON.stringify({
-    model: "gpt-3.5-turbo",
-    messages: [{ role: "user", content: userMessage }],,
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: userMessage }],
+        }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
       const data = await response.json();
-      return data.reply;
+      return data.reply; // Корректное получение ответа
     } catch (error) {
       console.error("Error:", error.message);
       throw new Error("An error occurred while communicating with the server.");
     }
   }
 
+  // Обработчик для кнопки отправки сообщения
   sendBtn.addEventListener("click", async () => {
     const userMessage = chatInput.value.trim();
     if (!userMessage) {
@@ -8487,10 +8493,12 @@
     }
   });
 
+  // Обработчик для отправки сообщения по Enter
   chatInput.addEventListener("keypress", (event) => {
     if (event.key === "Enter") sendBtn.click();
   });
 </script>
+
 
 
 
