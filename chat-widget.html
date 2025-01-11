@@ -56,7 +56,7 @@
   }
   #chat-input {
     width: calc(100% - 60px);
-    padding: 5px;
+    padding: 8px;
     margin-right: 5px;
   }
   #send-btn {
@@ -74,47 +74,39 @@
   const chatInput = document.getElementById("chat-input");
   const messages = document.getElementById("messages");
 
-  // Определяем метод API: GET для получения данных или UPDATE для обновления
-  const apiMethod = "GET"; // Или "UPDATE", если нужно
+  // OpenAI API Key (замените на свой ключ)
+  const OPENAI_API_KEY = "sk-..."; // Вставьте ваш API-ключ OpenAI
 
-  // Функция отправки запроса к API
+  // Функция отправки запроса к OpenAI API
   async function sendMessage(userMessage) {
     try {
-      let response;
-      let apiUrl = "https://api.tophat.one/agent-api/fb2ac421-f9d4-43b8-b9a4-08927a819ebd/knowledge";
+      const prompt = `You are an AI assistant. Respond in a friendly and helpful manner.\n\nUser: ${userMessage}\nAI:`;
 
-      if (apiMethod === "GET") {
-        // GET-запрос: добавляем параметр prompt в URL
-        apiUrl += `?prompt=${encodeURIComponent(userMessage)}`;
-        response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            "Authorization": "Bearer tophat_976d1e3da2b7444e85c6ba692711ef05",
-          },
-        });
-      } else if (apiMethod === "UPDATE") {
-        // UPDATE-запрос: отправляем prompt в теле запроса
-        response = await fetch(apiUrl, {
-          method: "UPDATE",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer tophat_976d1e3da2b7444e85c6ba692711ef05",
-          },
-          body: JSON.stringify({ prompt: userMessage }),
-        });
-      }
+      const response = await fetch("https://api.openai.com/v1/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "text-davinci-003", // Используемая модель OpenAI
+          prompt: prompt,
+          max_tokens: 150,
+          temperature: 0.7,
+        }),
+      });
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      return data.response || "Sorry, I couldn't understand.";
+      return data.choices[0].text.trim(); // Возвращаем текст AI
     } catch (error) {
       console.error("Error:", error.message);
-      throw new Error("An error occurred while communicating with the AI API.");
+      throw new Error("An error occurred while communicating with OpenAI API.");
     }
   }
 
-  // Обработчик кнопки "Send"
+  // Обработчик кнопки Send
   sendBtn.addEventListener("click", async () => {
     const userMessage = chatInput.value.trim();
     if (!userMessage) {
@@ -132,7 +124,7 @@
     document.getElementById("loading").style.display = "block"; // Показываем индикатор загрузки
 
     try {
-      // Отправляем сообщение и получаем ответ от API
+      // Отправляем сообщение и получаем ответ от OpenAI API
       const aiResponse = await sendMessage(userMessage);
 
       // Добавляем ответ AI в чат
@@ -146,12 +138,4 @@
     } catch (error) {
       alert(error.message);
     } finally {
-      document.getElementById("loading").style.display = "none"; // Скрываем индикатор загрузки
-    }
-  });
-
-  // Обработчик отправки сообщения по Enter
-  chatInput.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") sendBtn.click();
-  });
-</script>
+      document.getElementById("
