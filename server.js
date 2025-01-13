@@ -12,7 +12,7 @@ const app = express();
 const PORT = 3000;
 const TOKEN = process.env.TOKEN;
 
-   const allowedOrigins = ['https://chibe.lol', 'https://bulei.onrender.com'];
+   const allowedOrigins = ['https://chibe.lol', 'https://bulei.onrender.com', 'https://bulei.onrender.com/chat'];
    app.use(   cors({
       origin: (origin, callback) => {         if (
             !origin ||            origin.startsWith('http://localhost') ||
