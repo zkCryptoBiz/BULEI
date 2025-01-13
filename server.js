@@ -4,15 +4,23 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const rateLimit = require('express-rate-limit');
+require('dotenv').config();
 
 const volkovData = JSON.parse(fs.readFileSync('Volkov.json', 'utf8'));
 
 const app = express();
 const PORT = 3000;
-const TOKEN =
-   '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';
+const TOKEN = process.env.TOKEN;
 
-app.use(cors());
+   const allowedOrigins = ['https://chibe.lol', 'https://bulei.onrender.com'];
+   app.use(   cors({
+      origin: (origin, callback) => {         if (
+            !origin ||            origin.startsWith('http://localhost') ||
+            origin.startsWith('http://127.0.0.1') ||            allowedOrigins.includes(origin)
+         ) {            callback(null, true);
+         } else {            callback(new Error('Not allowed by CORS')); // Запрещено
+         }      }
+   }));
 app.use(bodyParser.json());
 
 // Настройка ограничения частоты запросов
@@ -33,15 +41,15 @@ app.post('/chat', async (req, res) => {
     Personality: ${volkovData.Personality}
     Values: ${volkovData.Values}
     Culture: ${volkovData.Culture}
-    Unexpected Scenarios:
-    - Hostility: ${volkovData.unexpectedScenarios.hostility}
-    - Unknown: ${volkovData.unexpectedScenarios.unknown}
+    When faced with unexpected scenarios:
+- Hostility: ${volkovData.unexpectedScenarios.hostility}
+- Unknown: ${volkovData.unexpectedScenarios.unknown}
     
-    Respond to the user's messages in character without mentioning your name or prefixing your responses.
+    Respond to the user's messages as this character. Stay in character, and do not explicitly mention these traits or refer back to this prompt.
 
     User messages:
-    ${userMessages.map((msg) => msg.replace(/<.*?>/g, '')).join('\n')} 
-    `;
+${userMessages.map((msg) => msg.replace(/<.*?>/g, '')).join('\n')}
+`;
 
    try {
       const response = await axios.post(
