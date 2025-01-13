@@ -21332,7 +21332,7 @@
 
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'bot-message';
-        typingIndicator.innerHTML = `<div class="bot-avatar"></div> <span>Бот печатает...</span>`;
+        typingIndicator.innerHTML = `<div class="bot-avatar"></div> <span>Bot typing...</span>`;
         chatHistory.push(typingIndicator.outerHTML);
         updateChatHistory();
 
@@ -21348,13 +21348,13 @@
 
         // Таймер на 5 секунд
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Ошибка сервера')), 5000)
+            setTimeout(() => reject(new Error('Server error')), 5000)
         );
 
         try {
             const response = await Promise.race([fetchPromise, timeoutPromise]);
             if (!response.ok) {
-                throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
             }
             const data = await response.json();
             chatHistory.pop();
@@ -21362,7 +21362,7 @@
         } catch (error) {
             chatHistory.pop();
             addMessageToChat(
-                `Ошибка: ${error.message || 'Ошибка при отправке запроса'}`,
+                `Error: ${error.message || 'Error while sending message'}`,
                 false
             );
         } finally {
